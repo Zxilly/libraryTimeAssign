@@ -1,8 +1,31 @@
 import Vue from 'vue'
+import VueRouter from 'vue-router'
+
+import vuetify from './plugins/vuetify';
+
 import App from './App.vue'
+
+import welcome from "@/components/welcome";
+import add from "@/components/add";
+import generate from "@/components/generate";
+
+
+Vue.use(VueRouter)
 
 Vue.config.productionTip = false
 
+const routes = [
+    {path: '/', component: welcome},
+    {path: '/add', component: add},
+    {path: '/generate', component: generate}
+]
+
+const router = new VueRouter({
+    routes
+})
+
 new Vue({
-  render: h => h(App),
+    vuetify,
+    router,
+    render: h => h(App)
 }).$mount('#app')
