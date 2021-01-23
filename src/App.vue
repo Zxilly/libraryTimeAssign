@@ -42,6 +42,23 @@
 
     <v-main>
       <router-view></router-view>
+      <v-snackbar
+          v-model="snackbarBool"
+          :color="snackbarColor"
+          top
+      >
+        {{ snackbarMessage }}
+        <template v-slot:action="{ attrs }">
+          <v-btn
+              dark
+              text
+              v-bind="attrs"
+              @click="snackbarBool = false"
+          >
+            关闭
+          </v-btn>
+        </template>
+      </v-snackbar>
     </v-main>
   </v-app>
 </template>
@@ -50,12 +67,25 @@
 
 export default {
   name: 'App',
+  mounted() {
+    this.$bus.$on('snackbar', this.showSnackbar)
+  },
   data: () => ({
+    snackbarBool: false,
+    snackbarMessage: '',
+    snackbarColor: '',
     title: {
       '/': '欢迎',
       '/add': '添加',
       '/generate': '生成排班表'
-    }
+    },
   }),
+  methods:{
+    showSnackbar: function (arg) {
+      this.snackbarMessage = arg[0]
+      this.snackbarColor = arg[1]
+      this.snackbarBool = true
+    }
+  }
 };
 </script>

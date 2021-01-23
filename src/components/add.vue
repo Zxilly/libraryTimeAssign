@@ -21,6 +21,8 @@
                     <v-text-field
                         label="姓名"
                         :counter="6"
+                        autocomplete="off"
+                        v-model="name"
                     />
                   </v-col>
                   <v-col
@@ -29,6 +31,8 @@
                     <v-text-field
                         label="学号"
                         :counter="10"
+                        autocomplete="off"
+                        v-model="studentID"
                     />
                   </v-col>
                 </v-row>
@@ -70,7 +74,7 @@
                             style="text-align: center"
                         >
                           <v-icon
-                              v-if="!!assign[i*5+j]"
+                              v-if="assign.indexOf(i*5+j)!==-1"
                               color="success"
                           >
                             mdi-checkbox-blank-circle
@@ -79,13 +83,13 @@
                       </tr>
                       </tbody>
                       <tfoot>
-                     <tr>
-                       <td
-                           colspan="8"
-                       >
-                         点击格子添加/删除对应的时间块
-                       </td>
-                     </tr>
+                      <tr>
+                        <td
+                            colspan="8"
+                        >
+                          点击格子添加/删除对应的时间块
+                        </td>
+                      </tr>
                       </tfoot>
                     </v-simple-table>
                   </v-col>
@@ -95,8 +99,12 @@
           </v-card-text>
           <v-divider/>
           <v-card-actions>
+            <v-card-text>已添加学生 {{ this.$bus.studentCount }}</v-card-text>
+
             <v-spacer/>
-            <v-btn text>
+            <v-btn
+                @click="save"
+                text>
               提交
             </v-btn>
           </v-card-actions>
@@ -109,18 +117,83 @@
 <script>
 export default {
   name: "add",
-  data() {
-    return {
-      weekdays: ['周一', '周二', '周三', '周四', '周五', '周六', '周日'],
-      timeparts: [8, 10, 14, 16, 18],
-      assign: new Array(36),
+  created() {
+    if (localStorage.getItem('studentData')!==null){
+      this.$bus.studentData = JSON.parse(localStorage.getItem('studentData'))
+    } else {
+      this.$bus.studentData = []
     }
+    if (localStorage.getItem('studentCount')!==null){
+      this.$bus.studentCount = JSON.parse(localStorage.getItem('studentCount'))
+    } else {
+      this.$bus.studentCount = 0
+    }
+
+
   },
+  data: () => ({
+    name: '',
+    studentID: '',
+    weekdays: ['周一', '周二', '周三', '周四', '周五', '周六', '周日'],
+    timeparts: [8, 10, 14, 16, 18],
+    assign: [],
+  }),
   methods: {
     setAvailable: function (i, j) {
-      console.log(i, j)
-      this.$set(this.assign, i * 5 + j, !this.assign[i * 5 + j])
-      //this.assign[i*5+j]=!this.assign[i*5+j]
+      // console.log(i, j)
+      let index = i * 5 + j
+      if (this.assign.indexOf(index) !== -1) {
+        this.assign.splice(this.assign.indexOf(index), 1)
+      } else {
+        this.assign.push(index)
+      }
+    },
+    save: function () {
+      if (!this.studentID) {
+        this.$bus.$emit('snackbar', ['学号未填写', 'error'])
+        return
+      }
+
+      if (!this.name) {
+        this.$bus.$emit('snackbar', ['姓名未填写', 'error'])
+        return;
+      }
+
+      if (this.assign.length === 0) {
+        this.$bus.$emit('snackbar', ['可用时间未填写', 'error'])
+        return;
+      }
+
+      let studentData = this.$bus.studentData
+
+      for (let student of studentData) {
+        if (student['studentID'] === this.studentID) {
+          this.$bus.$emit('snackbar', ['此学生已经添加', 'error'])
+          return;
+        }
+      }
+
+      this.assign.sort((a,b)=>(a-b))
+
+      studentData.push({
+        'studentID': this.studentID,
+        'name': this.name,
+        'assign': this.assign
+      })
+
+      this.$bus.studentCount++
+
+      this.$bus.$emit('snackbar', ['此学生添加成功', 'success'])
+
+      //console.log(this.$bus.studentData)
+      //console.log(this.$bus.studentCount)
+
+      localStorage.setItem('studentData',JSON.stringify(this.$bus.studentData))
+      localStorage.setItem('studentCount',JSON.stringify(this.$bus.studentCount))
+
+      this.assign = []
+      this.studentID = ''
+      this.name = ''
     }
   }
 }
